@@ -2,12 +2,12 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtCore import QTimer, Qt
-from pong.game_env import GameEnv
-from pong.learn_game import GameLearner
+from game_env import GameEnv
+from learn_game import GameLearner
 import numpy as np
 
 class GameGUI(QWidget):
-    def __init__(self):
+    def __init__(self, model_path):
         super().__init__()
 
         self.game_env = GameEnv()
@@ -19,11 +19,16 @@ class GameGUI(QWidget):
         self.timer.timeout.connect(self.timerEvent)
         self.timer.start()
 
-        self.game_player = GameLearner()
-        self.game_player.model.load_weights("pong/models/trial-120.model.w")
+        print(model_path)
+
+        if model_path is None:
+            self.game_player = None
+        else:
+            self.game_player = GameLearner()
+            self.game_player.model.load_weights(model_path)
 
     def initUI(self):
-        self.setWindowTitle("Game GUI")
+        self.setWindowTitle("Pong")
         self.resize(self.game_env.env_width, self.game_env.env_height)
         self.show()
 
@@ -63,15 +68,16 @@ class GameGUI(QWidget):
         if self.game_env.game_over == 0:
 
             # if auto mode.
-            state = np.copy(self.game_env.state)
-            state = np.reshape(state, (1, len(state)))
-            y = self.game_player.model.predict(state)[0]
-            action = np.argmax(y)
-            self.game_env.act(action)
+            if self.game_player is not None:
+                state = np.copy(self.game_env.state)
+                state = np.reshape(state, (1, len(state)))
+                y = self.game_player.model.predict(state)[0]
+                action = np.argmax(y)
+                self.game_env.act(action)
+                print("action: {0}, reward: {1}".format(action, y[action]))
 
             self.game_env.step()
 
-            print("action: {0}, reward: {1}".format(action, y[action]))
 
         self.repaint()
 
@@ -87,10 +93,13 @@ class GameGUI(QWidget):
             self.game_env.init()
 
 if __name__ == "__main__":
-    print("Game GUI")
 
     app = QApplication(sys.argv)
-    gui = GameGUI()
+
+    if len(sys.argv) == 1:
+        gui = GameGUI(None)
+    else:
+        gui = GameGUI(sys.argv[1])
 
     ret = app.exec_()
     sys.exit(ret)

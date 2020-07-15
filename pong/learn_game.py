@@ -8,7 +8,7 @@ from collections import deque
 class GameLearner:
     def __init__(self):
         self.game_env = GameEnv()
-        self.max_memory_size = 20000
+        self.max_memory_size = 50000
         self.memory = deque(maxlen=self.max_memory_size)
         self.gamma = 0.95
         self.epsilon = 1.0
@@ -62,7 +62,7 @@ class GameLearner:
 
         if len(self.memory) >= min_batch_size:
 
-            batch_size = max(min_batch_size, int(len(self.memory) * 0.1))
+            batch_size = max(min_batch_size, int(len(self.memory) * 0.2))
             #batch_size = min_batch_size
 
             samples = random.sample(self.memory, batch_size)
@@ -160,10 +160,10 @@ if __name__ == "__main__":
         if learner.game_env.game_over == 1:
             print(" Failed to complete in trial {}, r:{}".format(trial, (sum_reward / step)))
             if trial % 10 == 0:
-                learner.save_model("pong/models/trial-{}.model".format(trial))
+                learner.save_model("models/trial-{}.model".format(trial))
         else:
             print(" Complted in {} trials".format(trial))
-            learner.save_model("pong/models/success.model")
+            learner.save_model("models/success.model")
             break
 
 
